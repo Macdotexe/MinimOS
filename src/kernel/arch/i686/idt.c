@@ -28,7 +28,7 @@ void __attribute__((cdecl)) i686_IDT_Load(
     IDTDescriptor* idtDescriptor
 );
 
-void i696_IDT_SetGate(
+void i686_IDT_SetGate(
     int interrupt,
     void* base,
     uint16_t segmentDescriptor,

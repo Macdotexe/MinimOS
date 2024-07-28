@@ -12,6 +12,13 @@ void __attribute__((section(".entry"))) start(uint16_t bootDrive)
 
     HAL_Initialize();
 
+    clrscr();
+
+    printf("MinimOS Kernel\r\n");
+
+    // Test interrupt handling
+    __asm("int $0x2");
+
 end:
     for (;;);
 }
