@@ -15,7 +15,7 @@ void __attribute__((cdecl)) start(uint16_t bootDrive)
 {
     clrscr();
 
-    printf("=== MinimOS Bootloader Stage 2 ===\r\n");
+    printf("MinimOS Bootloader Stage 2\r\n");
 
     printf("Initializing disk...\r\n");
     
