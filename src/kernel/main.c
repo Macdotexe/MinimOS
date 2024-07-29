@@ -14,10 +14,10 @@ void __attribute__((section(".entry"))) start(uint16_t bootDrive)
 
     clrscr();
 
-    printf("MinimOS Kernel\r\n");
+    printf("MinimOS Kernel Loaded\n");
 
     // Test interrupt handling
-    __asm("int $0x2");
+    __asm("int $0x1");
 
 end:
     for (;;);
