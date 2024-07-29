@@ -5,6 +5,8 @@
         "*.inc": "c",
         "ranges": "c",
         "internet": "c",
-        "regex": "c"
+        "regex": "c",
+        "memory.h": "c",
+        "isr.h": "c"
     },
 }
