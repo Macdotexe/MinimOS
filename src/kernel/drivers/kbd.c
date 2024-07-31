@@ -17,10 +17,11 @@ uint8_t print_counter = 0;
 void KBD_IRQ(Registers* regs)
 {
     uint8_t key = i686_inb(0x60);
+    last_press = key;
+    uint8_t chr = KBD_Key2Char(key);
     
-    if (KBD_Key2Char(key) != 0)
+    if (key < 0x80)
     {
-        last_press = key;
         waiting_for_input = 0;
     }
     
@@ -56,7 +57,7 @@ void KBD_IRQ(Registers* regs)
             }
             
         }
-        else
+        else if (chr != 0)
         {
             printf("%c", KBD_Key2Char(key));
             print_counter++;
@@ -179,6 +180,7 @@ void KBD_ReadLine(char* out)
     }
 
 done:
+    printing = 0;
     strcpy(out, buffer);
 }
 
@@ -187,10 +189,13 @@ void KBD_ReadNumber(uint32_t* out)
 {
     static char buffer[256] = {0};
     int index = 0;
-    int valid_input = 0;
 
     // reset buffer
     memset(buffer, 0, sizeof(buffer));
+
+    // set up for printing
+    printing = 1;
+    print_counter = 0;
 
     while (1)
     {
@@ -205,11 +210,13 @@ void KBD_ReadNumber(uint32_t* out)
         case KEY_BACKSPACE:
             if (index > 0)
             {
-                buffer[index--] = '\0';
+                
+                index--;
+                buffer[index] = '\0';
             }
             break;
         default:
-            if (index < sizeof(buffer) - 1 && KBD_Key2Char(last_press) >= '0' && KBD_Key2Char(last_press) <= '9')
+            if (index < sizeof(buffer) - 1)
             {
                 buffer[index++] = KBD_Key2Char(last_press);
                 buffer[index] = '\0';
@@ -218,15 +225,10 @@ void KBD_ReadNumber(uint32_t* out)
         }
 
         // printf("\nBuffer: %s\n", buffer);
+        // printf("\nIndex: %d\n", index);
     }
 
 done:
+    printing = 0;
     *out = atoi(buffer);
-    valid_input = 1;
-
-    while (!valid_input)
-    {
-        printf("\nInvalid input, try again: ");
-        KBD_ReadNumber(out);
-    }
 }
