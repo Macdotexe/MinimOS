@@ -53,3 +53,31 @@ unsigned strlen(const char* str)
 
     return len;
 }
+
+int atoi(const char *str) {
+    int result = 0;
+    int sign = 1;
+    int i = 0;
+
+    if (str == NULL) {
+        return 0;
+    }
+
+    // Check for sign
+    if (str[0] == '-' || str[0] == '+') {
+        sign = (str[0] == '-') ? -1 : 1;
+        i++;
+    }
+
+    // Convert the number
+    while (str[i] != '\0') {
+        if (str[i] >= '0' && str[i] <= '9') {
+            result = result * 10 + (str[i] - '0');
+        } else {
+            break;
+        }
+        i++;
+    }
+
+    return result * sign;
+}

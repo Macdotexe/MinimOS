@@ -20,17 +20,15 @@ void __attribute__((section(".entry"))) start(uint16_t bootDrive)
 
     // Test program
     printf("=== Test Program ===\n");
+    uint32_t* num1;
+    uint32_t* num2;
 
-    printf("Enter name: ");
-    char* name;
-    KBD_ReadLine(name);
-    printf("name: %s\n", name);
+    printf("Enter number 1: ");
+    KBD_ReadNumber(num1);
+    printf("Enter number 2: ");
+    KBD_ReadNumber(num2);
 
-    printf("Enter surname: ");
-    char* surname;
-    KBD_ReadLine(surname);
-
-    printf("Hello, %s %s!\n", name, surname);
+    printf("Result: %d\n", *num1 + *num2);
 
 end:
     printf("End of program: halted\n");

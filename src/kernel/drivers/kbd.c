@@ -5,27 +5,72 @@
 #include <memory.h>
 
 uint8_t waiting_for_input = 0;
-KBD_KEY last_key = NOOP;
+KBD_KEY last_press = NOOP;
+
+uint8_t caps_lock = 0;
+uint8_t shift = 0;
+uint8_t ctrl = 0;
+
+uint8_t printing = 0;
+uint8_t print_counter = 0;
 
 void KBD_IRQ(Registers* regs)
 {
     uint8_t key = i686_inb(0x60);
-    last_key = key;
-    if (key > 0x80)
-        return;
     
-    if (waiting_for_input)
-        last_key = key;
+    if (KBD_Key2Char(key) != 0)
+    {
+        last_press = key;
         waiting_for_input = 0;
+    }
+    
 
-    printf("%c", KBD_Key2Char(key));
+    switch (key)
+    {
+    case KEY_LEFT_SHIFT:
+        shift = 1;
+        return;
+    case KEY_LEFT_CONTROL:
+        ctrl = 1;
+        return;
+    case KEY_CAPS_LOCK:
+        caps_lock = !caps_lock;
+        return;
+    case KEY_LEFT_SHIFT_RELEASED:
+        shift = 0;
+        return;
+    case KEY_LEFT_CONTROL_RELEASED:
+        ctrl = 0;
+        return;
+    }
+    
+
+    if (printing == 1)
+    {
+        if (key == KEY_BACKSPACE)
+        {
+            if (print_counter > 0)
+            {
+                backspace();
+                print_counter--;
+            }
+            
+        }
+        else
+        {
+            printf("%c", KBD_Key2Char(key));
+            print_counter++;
+        }
+        
+        
+    }
+    
 }
 
 uint8_t KBD_Key2Char(KBD_KEY key)
 {
     switch (key)
     {
-        case KEY_ESCAPE: return 0;
         case KEY_1: return '1';
         case KEY_2: return '2';
         case KEY_3: return '3';
@@ -38,7 +83,6 @@ uint8_t KBD_Key2Char(KBD_KEY key)
         case KEY_0: return '0';
         case KEY_MINUS: return '-';
         case KEY_EQUALS: return '=';
-        case KEY_BACKSPACE: backspace(); return NOOP;
         case KEY_TAB: return '\t';
         case KEY_Q: return 'q';
         case KEY_W: return 'w';
@@ -89,6 +133,7 @@ uint8_t KBD_Key2Char(KBD_KEY key)
         case KEY_KP_0: return '0';
         case KEY_KP_PERIOD: return '.';
         case KEY_SPACE: return ' ';
+        default: return 0;
     }
 }
 
@@ -97,12 +142,20 @@ void KBD_ReadLine(char* out)
     static char buffer[256] = {0};
     int index = 0;
 
+    // reset buffer
+    memset(buffer, 0, sizeof(buffer));
+
+    // set up for printing
+    printing = 1;
+    print_counter = 0;
+
     while (1)
     {
+        // tell IRQ handler to notify on input
         waiting_for_input = 1;
         while (waiting_for_input == 1) { }
 
-        switch (last_key)
+        switch (last_press)
         {
         case KEY_ENTER:
             goto done;
@@ -111,20 +164,69 @@ void KBD_ReadLine(char* out)
             {
                 index--;
                 buffer[index] = '\0';
-                movecursor(0, 0, 1, 0);
             }
             break;
         default:
             if (index < sizeof(buffer) - 1)
             {
-                buffer[index++] = KBD_Key2Char(last_key);
+                buffer[index++] = KBD_Key2Char(last_press);
                 buffer[index] = '\0';
             }
             break;
         }
+
+        // printf("\nBuffer: %s\n", buffer);
     }
 
 done:
     strcpy(out, buffer);
 }
 
+
+void KBD_ReadNumber(uint32_t* out)
+{
+    static char buffer[256] = {0};
+    int index = 0;
+    int valid_input = 0;
+
+    // reset buffer
+    memset(buffer, 0, sizeof(buffer));
+
+    while (1)
+    {
+        // tell IRQ handler to notify on input
+        waiting_for_input = 1;
+        while (waiting_for_input == 1) { }
+
+        switch (last_press)
+        {
+        case KEY_ENTER:
+            goto done;
+        case KEY_BACKSPACE:
+            if (index > 0)
+            {
+                buffer[index--] = '\0';
+            }
+            break;
+        default:
+            if (index < sizeof(buffer) - 1 && KBD_Key2Char(last_press) >= '0' && KBD_Key2Char(last_press) <= '9')
+            {
+                buffer[index++] = KBD_Key2Char(last_press);
+                buffer[index] = '\0';
+            }
+            break;
+        }
+
+        // printf("\nBuffer: %s\n", buffer);
+    }
+
+done:
+    *out = atoi(buffer);
+    valid_input = 1;
+
+    while (!valid_input)
+    {
+        printf("\nInvalid input, try again: ");
+        KBD_ReadNumber(out);
+    }
+}
