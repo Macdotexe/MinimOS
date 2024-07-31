@@ -7,6 +7,10 @@
         "internet": "c",
         "regex": "c",
         "memory.h": "c",
-        "isr.h": "c"
+        "isr.h": "c",
+        "kbd.h": "c",
+        "rope": "c",
+        "chrono": "c",
+        "variant": "c"
     },
 }

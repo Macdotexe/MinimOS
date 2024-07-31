@@ -1,19 +1,12 @@
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 #include <hal/hal.h>
 #include "memory.h"
-#include "arch/i686/isr.h"
-#include "arch/i686/irq.h"
+#include "drivers/kbd.h"
 
 extern uint8_t __bss_start;
 extern uint8_t __end;
-
-uint64_t time;
-
-void timer(Registers* regs)
-{
-    time++;
-}
 
 void __attribute__((section(".entry"))) start(uint16_t bootDrive)
 {
@@ -25,12 +18,21 @@ void __attribute__((section(".entry"))) start(uint16_t bootDrive)
 
     printf("MinimOS Kernel Loaded\n");
 
-    i686_IRQ_RegisterHandler(0, timer);
+    // Test program
+    printf("=== Test Program ===\n");
+
+    printf("Enter name: ");
+    char* name;
+    KBD_ReadLine(name);
+    printf("name: %s\n", name);
+
+    printf("Enter surname: ");
+    char* surname;
+    KBD_ReadLine(surname);
+
+    printf("Hello, %s %s!\n", name, surname);
 
 end:
-    for (;;)
-    {
-        printf("Time: %u\r", time);
-        
-    }
+    printf("End of program: halted\n");
+    for (;;);
 }

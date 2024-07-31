@@ -41,6 +41,13 @@ void setcursor(int x, int y)
     i686_outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
 }
 
+void movecursor(int up, int down, int left, int right)
+{
+    g_ScreenX += right - left;
+    g_ScreenY += up - down;
+    setcursor(g_ScreenX, g_ScreenY);
+}
+
 void clrscr()
 {
     for (int y = 0; y < SCREEN_HEIGHT; y++)
@@ -311,4 +318,41 @@ void print_buffer(const char* msg, const void* buffer, uint32_t count)
         putc(g_HexChars[u8Buffer[i] & 0xF]);
     }
     puts("\n");
+}
+
+
+void backspace()
+{
+    if (g_ScreenX > 0)
+    {
+        g_ScreenX--;
+        putchr(g_ScreenX, g_ScreenY, ' ');
+        putcolor(g_ScreenX, g_ScreenY, DEFAULT_COLOR);
+        setcursor(g_ScreenX, g_ScreenY);
+    } 
+    else if (g_ScreenY > 0)
+    {
+        g_ScreenY--;
+        g_ScreenX = SCREEN_WIDTH - 1;
+        if (getchr(g_ScreenX - 1, g_ScreenY) != '\0')
+        {
+            putchr(g_ScreenX, g_ScreenY, ' ');
+            putcolor(g_ScreenX, g_ScreenY, DEFAULT_COLOR);
+            setcursor(g_ScreenX, g_ScreenY);
+        }
+        
+        while (getchr(g_ScreenX, g_ScreenY) == '\0')
+        {
+            if (g_ScreenX == 0)
+            {
+                break;
+            }
+            else
+            {
+                g_ScreenX--;
+            }
+        }
+        g_ScreenX++;
+        setcursor(g_ScreenX, g_ScreenY);
+    }
 }
