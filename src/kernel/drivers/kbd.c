@@ -11,7 +11,6 @@ uint8_t caps_lock = 0;
 uint8_t left_shift = 0;
 uint8_t right_shift = 0;
 uint8_t ctrl = 0;
-uint8_t right_shift = 0;
 
 uint8_t printing = 0;
 uint8_t print_counter = 0;
