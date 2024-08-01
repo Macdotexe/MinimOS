@@ -54,7 +54,7 @@ unsigned strlen(const char* str)
     return len;
 }
 
-int atoi(const char *str) {
+int atoi(const char *str, int* error) {
     int result = 0;
     int sign = 1;
     int i = 0;
@@ -74,7 +74,8 @@ int atoi(const char *str) {
         if (str[i] >= '0' && str[i] <= '9') {
             result = result * 10 + (str[i] - '0');
         } else {
-            break;
+            *error = 1;
+            return 0;
         }
         i++;
     }

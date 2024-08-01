@@ -8,8 +8,10 @@ uint8_t waiting_for_input = 0;
 KBD_KEY last_press = NOOP;
 
 uint8_t caps_lock = 0;
-uint8_t shift = 0;
+uint8_t left_shift = 0;
+uint8_t right_shift = 0;
 uint8_t ctrl = 0;
+uint8_t right_shift = 0;
 
 uint8_t printing = 0;
 uint8_t print_counter = 0;
@@ -19,17 +21,26 @@ void KBD_IRQ(Registers* regs)
     uint8_t key = i686_inb(0x60);
     last_press = key;
     uint8_t chr = KBD_Key2Char(key);
+
+    
+    if ((left_shift == 1) || (right_shift == 1) || (caps_lock == 1)) {
+        if (chr >= 'a' && chr <= 'z') {
+            chr = chr - 'a' + 'A';
+        }
+    }
     
     if (key < 0x80)
     {
         waiting_for_input = 0;
     }
-    
 
     switch (key)
     {
     case KEY_LEFT_SHIFT:
-        shift = 1;
+        left_shift = 1;
+        return;
+    case KEY_RIGHT_SHIFT:
+        right_shift = 1;
         return;
     case KEY_LEFT_CONTROL:
         ctrl = 1;
@@ -38,7 +49,10 @@ void KBD_IRQ(Registers* regs)
         caps_lock = !caps_lock;
         return;
     case KEY_LEFT_SHIFT_RELEASED:
-        shift = 0;
+        left_shift = 0;
+        return;
+    case KEY_RIGHT_SHIFT_RELEASED:
+        right_shift = 0;
         return;
     case KEY_LEFT_CONTROL_RELEASED:
         ctrl = 0;
@@ -59,7 +73,7 @@ void KBD_IRQ(Registers* regs)
         }
         else if (chr != 0)
         {
-            printf("%c", KBD_Key2Char(key));
+            printf("%c", chr);
             print_counter++;
         }
         
@@ -177,6 +191,7 @@ void KBD_ReadLine(char* out)
         }
 
         // printf("\nBuffer: %s\n", buffer);
+        // printf("Index: %d\n", index);
     }
 
 done:
@@ -230,5 +245,18 @@ void KBD_ReadNumber(uint32_t* out)
 
 done:
     printing = 0;
-    *out = atoi(buffer);
+    int* error = 0;
+    *error = 0;
+    *out = atoi(buffer, error);
+    if (*error == 1)
+    {
+        printf("Invalid number: %s\n", buffer);
+        printf("Try again: ");
+        KBD_ReadNumber(out);
+    }
+    else
+    {
+       return;
+    }
+    
 }
