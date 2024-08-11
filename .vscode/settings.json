@@ -11,6 +11,9 @@
         "kbd.h": "c",
         "rope": "c",
         "chrono": "c",
-        "variant": "c"
+        "variant": "c",
+        "stdint.h": "c",
+        "cstdlib": "c",
+        "memdefs.h": "c"
     },
 }

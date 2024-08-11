@@ -34,6 +34,20 @@ void __attribute__((cdecl)) start(uint16_t bootDrive)
         goto end;
     }
 
+    // FAT_File* root = FAT_Open(&disk, "/");
+
+    // FAT_DirectoryEntry entry;
+    // while (FAT_ReadEntry(&disk, root, &entry))
+    // {
+    //     printf("  ");
+    //     for (int i = 0; i < 11; i++)
+    //         putc(entry.Name[i]);
+
+    //     printf("\r\n");
+    // }
+    // FAT_Close(root);
+
+
     printf("Loading kernel...\r\n");
 
     // load kernel
@@ -55,5 +69,6 @@ void __attribute__((cdecl)) start(uint16_t bootDrive)
     kernelStart();
 
 end:
+    printf("Halted.\r\n");
     for (;;);
 }
