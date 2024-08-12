@@ -66,7 +66,7 @@ void __attribute__((cdecl)) start(uint16_t bootDrive)
 
     // execute kernel
     KernelStart kernelStart = (KernelStart)Kernel;
-    kernelStart();
+    kernelStart(bootDrive);
 
 end:
     printf("Halted.\r\n");
