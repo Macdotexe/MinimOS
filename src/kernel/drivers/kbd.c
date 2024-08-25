@@ -1,67 +1,68 @@
 #include "kbd.h"
 #include <stdio.h>
 #include "arch/i686/io.h"
+#include "arch/i686/pic.h"
 #include <string.h>
 #include <memory.h>
+#include <stdbool.h>
 
-uint8_t waiting_for_input = 0;
+bool kbd_irq = false;
 KBD_KEY last_press = NOOP;
 
-uint8_t caps_lock = 0;
-uint8_t left_shift = 0;
-uint8_t right_shift = 0;
-uint8_t ctrl = 0;
+bool caps_lock = false;
+bool left_shift = false;
+bool right_shift = false;
+bool ctrl = false;
 
-uint8_t printing = 0;
-uint8_t print_counter = 0;
+bool printing = false;
+bool print_counter = false;
 
 void KBD_IRQ(Registers* regs)
 {
-    uint8_t key = i686_inb(0x60);
-    last_press = key;
-    uint8_t chr = KBD_Key2Char(key);
+    last_press = i686_inb(0x60);
+    uint8_t chr = KBD_Key2Char(last_press);
 
     
-    if ((left_shift == 1) || (right_shift == 1) || (caps_lock == 1)) {
+    if ((left_shift == true) || (right_shift == true) || (caps_lock == true)) {
         if (chr >= 'a' && chr <= 'z') {
             chr = chr - 'a' + 'A';
         }
     }
     
-    if (key < 0x80)
+    if (last_press < 0x80)
     {
-        waiting_for_input = 0;
+        kbd_irq = false;
     }
 
-    switch (key)
+    switch (last_press)
     {
     case KEY_LEFT_SHIFT:
-        left_shift = 1;
-        return;
+        left_shift = true;
+        goto end;
     case KEY_RIGHT_SHIFT:
-        right_shift = 1;
-        return;
+        right_shift = true;
+        goto end;
     case KEY_LEFT_CONTROL:
-        ctrl = 1;
-        return;
+        ctrl = true;
+        goto end;
     case KEY_CAPS_LOCK:
         caps_lock = !caps_lock;
-        return;
+        goto end;
     case KEY_LEFT_SHIFT_RELEASED:
-        left_shift = 0;
-        return;
+        left_shift = false;
+        goto end;
     case KEY_RIGHT_SHIFT_RELEASED:
-        right_shift = 0;
-        return;
+        right_shift = false;
+        goto end;
     case KEY_LEFT_CONTROL_RELEASED:
-        ctrl = 0;
-        return;
+        ctrl = false;
+        goto end;
     }
     
 
-    if (printing == 1)
+    if (printing == true)
     {
-        if (key == KEY_BACKSPACE)
+        if (last_press == KEY_BACKSPACE)
         {
             if (print_counter > 0)
             {
@@ -70,7 +71,7 @@ void KBD_IRQ(Registers* regs)
             }
             
         }
-        else if (chr != 0)
+        else if (chr != false)
         {
             printf("%c", chr);
             print_counter++;
@@ -78,7 +79,17 @@ void KBD_IRQ(Registers* regs)
         
         
     }
-    
+
+end:
+    i686_PIC_SendEndOfInterrupt(1);
+    return;
+}
+
+void KBD_WaitForIRQ()
+{
+    kbd_irq = false;
+    while (kbd_irq == false)
+    return;
 }
 
 uint8_t KBD_Key2Char(KBD_KEY key)
@@ -154,20 +165,19 @@ uint8_t KBD_Key2Char(KBD_KEY key)
 void KBD_ReadLine(char* out)
 {
     static char buffer[256] = {0};
-    int index = 0;
+    int index = false;
 
     // reset buffer
     memset(buffer, 0, sizeof(buffer));
 
     // set up for printing
-    printing = 1;
-    print_counter = 0;
+    printing = true;
+    print_counter = false;
 
     while (1)
     {
         // tell IRQ handler to notify on input
-        waiting_for_input = 1;
-        while (waiting_for_input == 1) { }
+        KBD_WaitForIRQ();
 
         switch (last_press)
         {
@@ -194,7 +204,7 @@ void KBD_ReadLine(char* out)
     }
 
 done:
-    printing = 0;
+    printing = false;
     strcpy(out, buffer);
 }
 
@@ -202,20 +212,19 @@ done:
 void KBD_ReadNumber(uint32_t* out)
 {
     static char buffer[256] = {0};
-    int index = 0;
+    int index = false;
 
     // reset buffer
     memset(buffer, 0, sizeof(buffer));
 
     // set up for printing
-    printing = 1;
-    print_counter = 0;
+    printing = true;
+    print_counter = false;
 
     while (1)
     {
         // tell IRQ handler to notify on input
-        waiting_for_input = 1;
-        while (waiting_for_input == 1) { }
+        KBD_WaitForIRQ();
 
         switch (last_press)
         {
@@ -243,11 +252,11 @@ void KBD_ReadNumber(uint32_t* out)
     }
 
 done:
-    printing = 0;
-    int* error = 0;
-    *error = 0;
+    printing = false;
+    int* error = false;
+    *error = false;
     *out = atoi(buffer, error);
-    if (*error == 1)
+    if (*error == true)
     {
         printf("Invalid number: %s\n", buffer);
         printf("Try again: ");
