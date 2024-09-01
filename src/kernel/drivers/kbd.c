@@ -165,14 +165,14 @@ uint8_t KBD_Key2Char(KBD_KEY key)
 void KBD_ReadLine(char* out)
 {
     static char buffer[256] = {0};
-    int index = false;
+    int index = 0;
 
     // reset buffer
     memset(buffer, 0, sizeof(buffer));
 
     // set up for printing
     printing = true;
-    print_counter = false;
+    print_counter = 0;
 
     while (1)
     {
